@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from main.models import News, Category, Tag, Comment
+from rest_framework.exceptions import ValidationError
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -34,3 +35,21 @@ class NewsSerializer(serializers.ModelSerializer):
         if news.category:
             return news.category.name
         return None
+
+
+class NewsValidateSerializer(serializers.Serializer):
+    title = serializers.CharField(min_length=10, max_length=150)
+    text = serializers.CharField(required=False)
+    amount = serializers.IntegerField(required=True)
+    is_active = serializers.BooleanField()
+    category_id = serializers.IntegerField(min_value=1)
+    tags = serializers.ListField(child=serializers.IntegerField(min_value=1))
+
+
+    def validate_category_id(self, category_id):
+        try:
+            Category.objects.get(id=category_id)
+        except Category.DoesNotExist:
+            raise ValidationError('Category does not exists!')
+        return category_id
+

@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view  # [GET, POST, PUT, DELETE]
 from rest_framework.response import Response  # Return Result
-from main.serializers import NewsSerializer
+from main.serializers import NewsSerializer, NewsValidateSerializer
 from main.models import News
 
 
@@ -15,16 +15,20 @@ def news_list_api_view(request):
         # 2. Convert list of news to list of Dictionary
         data = NewsSerializer(instance=news, many=True).data
 
-        # 3. Return Dictionary as JSON
+        # 3. Return Dictionary as JSO
         return Response(data=data)
     elif request.method == 'POST':
+        # Step 0. Validation
+        serializer = NewsSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(status=400, data=serializer.errors)
         # Step 1. Get data from BODY
-        title = request.data.get('title')
-        text = request.data.get('text')
-        amount = request.data.get('amount')
-        is_active = request.data.get('is_active')
-        category_id = request.data.get('category_id')
-        tags = request.data.get('tags')
+        title = serializer.validated_data.get('title') # None
+        text = serializer.validated_data.get('text') # None
+        amount = serializer.validated_data.get('amount')
+        is_active = serializer.validated_data.get('is_active') # T
+        category_id = serializer.validated_data.get('category_id')
+        tags = serializer.validated_data.get('tags')
         # Step 2. Create news by this data
         news = News.objects.create(
             title=title, text=text,
@@ -49,6 +53,8 @@ def news_detail_api_view(request, news_id):  # 4
         data = NewsSerializer(instance=news, many=False).data
         return Response(data=data)
     elif request.method == 'PUT':
+        serializer = NewsSerializer(data=request.data)
+        if not serializer.is_valid(raise_exception=True)
         news.title = request.data.get('title')
         news.category_id = request.data.get('category_id')
         news.text = request.data.get('text')
