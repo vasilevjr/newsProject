@@ -1,12 +1,13 @@
 from rest_framework.decorators import api_view  # [GET, POST, PUT, DELETE]
 from rest_framework.response import Response  # Return Result
-from main.serializers import NewsSerializer, NewsValidateSerializer
+from main.serializers import NewsSerializer
 from main.models import News
 
 
 @api_view(['GET', 'POST'])
 def news_list_api_view(request):
     if request.method == 'GET':
+        print(request.user)
         search = request.query_params.get('search', '')
         # 1. Get list of news
         news = News.objects.select_related('category') \
@@ -54,15 +55,15 @@ def news_detail_api_view(request, news_id):  # 4
         return Response(data=data)
     elif request.method == 'PUT':
         serializer = NewsSerializer(data=request.data)
-        if not serializer.is_valid(raise_exception=True)
-        news.title = request.data.get('title')
-        news.category_id = request.data.get('category_id')
-        news.text = request.data.get('text')
-        news.view_amount = request.data.get('amount')
-        news.is_active = request.data.get('is_active')
-        news.tags.set(request.data.get('tags'))
-        news.save()
-        return Response(data=NewsSerializer(news).data)
+        if not serializer.is_valid(raise_exception=True):
+            news.title = request.data.get('title')
+            news.category_id = request.data.get('category_id')
+            news.text = request.data.get('text')
+            news.view_amount = request.data.get('amount')
+            news.is_active = request.data.get('is_active')
+            news.tags.set(request.data.get('tags'))
+            news.save()
+            return Response(data=NewsSerializer(news).data)
     else:
         news.delete()
         return Response(status=204)
